@@ -4,18 +4,17 @@
 #include <sys/time.h>
 
 
-const std::string Logger::EMPTY_STRING = "none";
+const std::string& Logger::EMPTY_STRING = "null";
 
 
 Logger& Logger::getInstance(const std::string& filename,
-							const int& linenum,
-							std::ostream& out,
+							const int& linenum, std::ostream& out,
 							const Level& level,
 							const Logger::Description& descr,
 							const bool& displayInitMsg)
 {
-	static Logger loggerInstance(out, level, descr, filename, linenum, displayInitMsg);
-	return loggerInstance;
+	static Logger instance(out, level, descr, filename, linenum, displayInitMsg);
+	return instance;
 }
 
 
@@ -23,9 +22,9 @@ Logger& Logger::addModule(const std::string& filename,
 						  const Logger::Level& level,
 						  const Logger::Description& description)
 {
-	const Modules::const_iterator it = _getModules().find(filename);
-	if (it == _getModules().end())
-		_getModules().insert({filename, {level, description}});
+	const Modules::const_iterator it = getModules().find(filename);
+	if (it == getModules().end())
+		getModules().insert({filename, {level, description}});
 
 	return getInstance();
 }
@@ -75,12 +74,19 @@ Logger& Logger::module(const std::string& funcname,
 						const std::string& filename,
 						const int& linenum)
 {
-	const Modules::const_iterator it = _getModules().find(filename);
-	if (it == _getModules().end())
+	const Modules::const_iterator it = getModules().find(filename);
+	if (it == getModules().end())
 		return _out(_level, _description, funcname, filename, linenum);
 
 	const Format& moduleFormat = it->second;
 	return _out(moduleFormat.first, moduleFormat.second, funcname, filename, linenum);
+}
+
+
+Logger::Modules& Logger::getModules()
+{
+	static Modules instance;
+	return instance;
 }
 
 
@@ -155,10 +161,11 @@ Logger::~Logger()
 	if (_displayDestroyMsg)
 	{
 		Logger& l = info(__FUNCTION__, __FILE__, __LINE__) << " registred modules:" << std::endl;
-		for (auto it : _getModules())
-			l << it.first << " --- "
+		for (auto it : getModules())
+			l << it.first << " - "
 			  << (it.second).first << ", "
-			  << int((it.second).second) << std::endl;
+			  << int((it.second).second)
+			  << std::endl;
 		_end();
 
 		info(__FUNCTION__, __FILE__, __LINE__)
@@ -195,7 +202,7 @@ Logger& Logger::_out(const Level& level,
 		case Description::FULL:
 			_output << '[' << level
 					<< "] [" << funcname
-					<< "] [" << basename(filename) << ':' << linenum << "] ";
+					<< "] (in " << basename(filename) << ':' << linenum << ") ";
 			break;
 		case Description::MESSAGE_ONLY:
 		default:
@@ -240,13 +247,6 @@ bool Logger::_isCurrentLevelValid() const
 bool Logger::_isCurrentLevelAlreadySet() const
 {
 	return (_current_message_level != Level::NONE);
-}
-
-
-Logger::Modules& Logger::_getModules()
-{
-	static Modules modulesInstance;
-	return modulesInstance;
 }
 
 

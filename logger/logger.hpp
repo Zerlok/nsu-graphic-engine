@@ -30,12 +30,6 @@ class Logger
 		};
 
 		// Static methods.
-		static void init(const std::string& filename = EMPTY_STRING,
-						 const int& linenum = 0,
-						 std::ostream& out = std::cout,
-						 const Level& level = Level::INFO,
-						 const Description& descr = Description::LEVEL,
-						 const bool& displayInitMsg = true);
 		static Logger& getInstance(const std::string& filename = EMPTY_STRING,
 								   const int& linenum = 0,
 								   std::ostream& out = std::cout,
@@ -84,14 +78,17 @@ class Logger
 		using Format = std::pair<Logger::Level, Logger::Description>;
 		using Modules = std::unordered_map<std::string, Format>;
 
-		// Static.
-		static const std::string EMPTY_STRING;
+		// Static fields.
+		static const std::string& CONSTRUCTOR_MESSAGE;
+		static const std::string& DESTRUCTOR_MESSAGE;
 
+		static const std::string& EMPTY_STRING;
+
+		// Static methods.
+		static Modules& getModules();
 		static std::string basename(const std::string& filename);
 		static std::ostream& addTimestamp(std::ostream& out);
 		static Level validateInitialLevel(const Level& level);
-		static Modules& _getModules();
-
 
 		// Constructors / Destructor.
 		Logger(std::ostream& output,
